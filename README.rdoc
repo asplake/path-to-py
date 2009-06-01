@@ -1,0 +1,109 @@
+= path-to-py
+
+== DESCRIPTION
+
+Python port of path-to[http://github.com/asplake/path-to/tree] - resource-oriented client APIs generated dynamically from server-provided or locally-configured metadata.
+
+Support for the core metadata is provided in Python in described_routes-py[http://github.com/asplake/described_routes-py/tree].
+
+For further information see roadmap for the original Ruby-based described_routes and path-to at http://positiveincline.com/?p=213.
+
+== CONTENTS
+
+* EXAMPLES
+* AUTHOR AND CONTACT INFORMATION
+* APPENDIX - SAMPLE JSON
+
+== EXAMPLES
+
+Initialise with the metadata shown in the appendix at the end of this file.  Typically provided by the server in JSON or YAML.
+
+  >>> from path_to import Application
+  >>> app = Application(...)
+
+Chaining, indexing, following relationships:
+
+  >>> print app.users['dojo'].edit
+  http://example.com/users/dojo/edit
+
+Positional and named parameters:
+
+  >>> print app.user_article('dojo', 'foo', format='json')
+  http://example.com/users/dojo/articles/foo.json
+
+Parameter dictionaries:
+
+  >>> print app.user_article({'user_id': 'dojo', 'article_id': 'foo', format: 'json'})
+  http://example.com/users/dojo/articles/foo.json
+
+Parameter inheritance:
+
+  >>> app = app.with_params(format='json')   # or app = app(format='json')
+  >>> print app.users['dojo'].articles['foo']
+  http://example.com/users/dojo/articles/foo.json
+  
+Future versions will add HTTP client methods (<code>get</code>, <code>put</code>, <code>post</code>, etc).  In the meantime, <code>str(path)</code> or <code>path.uri</code> will yield a URI string that can be passed to an existing HTTP client library.
+
+== REQUIREMENTS
+
+* described_routes-py - http://github.com/asplake/described_routes-py/tree
+* Joe Gregorio's URI Template parser -  http://code.google.com/p/uri-templates/source/browse/#svn/trunk).
+* Your favourite JSON or YAML printer/parser.
+
+== AUTHOR AND CONTACT INFORMATION
+
+Mike Burrows (asplake), email mailto:mjb@asplake.co.uk, website positiveincline.com[http://positiveincline.com] (see articles tagged path-to[http://positiveincline.com/?tag=path-to])
+
+== APPENDIX - SAMPLE METADATA
+<br/>
+  [
+      {
+          'name':               'users',
+          'uri_template':       'http://example.com/users{-prefix|.|format}',
+          'optional_params':    ['format'],
+          'options':            ['GET', 'POST'],
+          'resource_templates': [
+              {
+                  'name':               'new_user',
+                  'rel':                'new',
+                  'uri_template':       'http://example.com/users/new{-prefix|.|format}',
+                  'optional_params':    ['format'],
+                  'options':            ['GET'],
+              },
+              {
+                  'name':               'user',
+                  'uri_template':       'http://example.com/users/{user_id}{-prefix|.|format}',
+                  'params':             ['user_id'],
+                  'optional_params':    ['format'],
+                  'options':            ['GET', 'PUT', 'DELETE'],
+                  'resource_templates': [
+                      {
+                          'name':            'edit_user',
+                          'rel':             'edit',
+                          'uri_template':    'http://example.com/users/{user_id}/edit{-prefix|.|format}',
+                          'params':          ['user_id'],
+                          'optional_params': ['format'],
+                          'options':         ['GET']
+                      },
+                      {
+                          'name':            'user_articles',
+                          'rel':             'articles',
+                          'uri_template':    'http://example.com/users/{user_id}/articles{-prefix|.|format}',
+                          'params':          ['user_id'],
+                          'optional_params': ['format'],
+                          'options':         ['GET', 'POST'],
+                          'resource_templates': [
+                              {
+                                  'name':               'user_article',
+                                  'uri_template':       'http://example.com/users/{user_id}/articles/{article_id}{-prefix|.|format}',
+                                  'params':             ['user_id', 'article_id'],
+                                  'optional_params':    ['format'],
+                                  'options':            ['GET', 'PUT', 'DELETE']
+                              }
+                          ]
+                      }
+                  ]
+              }
+          ]
+      }
+  ]
